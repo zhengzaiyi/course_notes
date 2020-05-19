@@ -52,7 +52,7 @@ module control(
                 n_state = 4'd0; 
             4'd5: //memwrite 
                 n_state = 4'd0; 
-            4'd6: //execute 
+            4'd6: //e0ecute 
                 n_state = 4'd7; 
             4'd7: //aluwriteback 
                 n_state = 4'd0;
@@ -72,207 +72,217 @@ module control(
     always @(*)begin 
         if(rst) begin 
             IorD = 1'b0; 
-            PCSource = 2'b11; //nextPC=0; 利用4路选择器的剩余1路 
+            PCSource = 2'b11; //ne0tPC=0; 利用4路选择器的剩余1路 
             PCWrite = 1'b1; 
         end 
         else 
             case(nstate) 
                 4'd0://fetch 
                 begin 
+                    PCWriteCond = 0;
                     IorD = 1'b0; //------Memaddr: PC 
                     MemRead = 1'b1; //------enable Mem read 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b1; //------enable save Instr 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; //------srcA: PC 
                     ALUSrcB = 2'b01; //------srcB: 4 
-                    ALUControl = 3'b001; //------ALU's func: add 
+                    ALUControl = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b1; //------enable update PC 
-                    PCSource = 2'b00; //------select nextPC=PC+4 
+                    PCSource = 2'b00; //------select ne0tPC=PC+4 
                 end 
                 4'd1://decode 
                 begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0;
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; //------srcA: PC 
-                    ALUSrcB = 2'b11; //------srcB: SignExtended<<2 
-                    ALUControl = 3'b001; //------ALU's func: add 
+                    ALUSrcB = 2'b11; //------srcB: SignE0tended<<2 
+                    ALUControl = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd2: //memaddr 
                 begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b10; //------srcB: SignExtended 
-                    ALUControl = 3'b001; //------ALU's func: add 
+                    ALUSrcB = 2'b10; //------srcB: SignE0tended 
+                    ALUControl = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd3: //memread 
                 begin 
+                    PCWriteCond = 0;
                     IorD = 1'b1; //------Memaddr: ALUResult_DFF 
                     MemRead = 1'b1; //------enable Mem read 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'bx; 
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0; 
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b000; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd4: //memwriteback 
                 begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0;
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; //------RegWdaddr: Rt 
                     MemtoReg = 1'b1; //------RegWdin: Memout 
                     RegWrite = 1'b1; //------enable Reg write 
-                    ALUSrcA = 1'bx; 
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0; 
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b006; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd5: //memwrite 
                 begin 
+                    PCWriteCond = 0;
                     IorD = 1'b1; //------Memaddr: ALUResult_DFF 
                     MemRead = 1'b0; 
                     MemWrite = 1'b1; //------enable Mem write 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'bx; 
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0; 
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b006; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
-                4'd6: //R type execute 
+                4'd6: //R type e0ecute 
                 begin 
-                    IorD = 1'bx;
+                    PCWriteCond = 0;
+                    IorD = 1'b0;
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
                     ALUSrcB = 2'b00; //------srcB: RegRdout2_DFF 
                     case(Funct) //------ALU's func: decided by 'Funct' 
-                        6'b100000: ALUControl = 5'h01;//add 
-                        6'b100010: ALUControl = 5'h02;//sub 
-                        6'b100100: ALUControl = 5'h03;//and 
-                        6'b100101: ALUControl = 5'h04;//or 
-                        6'b100110: ALUControl = 5'h05;//xor 
-                        6'b100111: ALUControl = 5'h06;//nor
-                        6'b101010: ALUControl = 5'h07;//slt 
+                        6'b100000: ALUControl = 5'h00;//add 
+                        6'b100010: ALUControl = 5'h01;//sub 
+                        6'b100100: ALUControl = 5'h02;//and 
+                        6'b100101: ALUControl = 5'h03;//or 
+                        6'b100110: ALUControl = 5'h04;//xor 
                     endcase 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd7: //aluwriteback 
                 begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b1; //------RegWdaddr: Rd 
                     MemtoReg = 1'b0; //------RegWdin: ALUResult_DFF 
                     RegWrite = 1'b1; //------enable Reg write 
-                    ALUSrcA = 1'bx; 
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0; 
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b006; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
-                4'd8: //branch begin 
-                    IorD = 1'bx; 
+                4'd8: //branch begin
+                    PCWriteCond = 1; 
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
                     ALUSrcB = 2'b00; //------srcB: RegRdout2_DFF 
-                    ALUControl = 3'b010; //------ALU's func: sub 
+                    ALUControl = 3'b001; //------ALU's func: sub 
                     Branch = 1'b1; //------enable update PC if beq 
                     PCWrite = 1'b0; 
-                    PCSource = 2'b01; //------select nextPC = ALUResult_DFF(PCBeq) 
+                    PCSource = 2'b01; //------select ne0tPC = ALUResult_DFF(PCBeq) 
                 end 
                 4'd9: //jump begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx;
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0;
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'bx;
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0;
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b006; 
                     Branch = 1'b0; 
                     PCWrite = 1'b1; //------enable update PC 
-                    PCSource = 2'b10; //------select nextPC = PCJump 
+                    PCSource = 2'b10; //------select ne0tPC = PCJump 
                 end 
                 4'd10: //addi execute begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'bx; 
-                    MemtoReg = 1'bx; 
+                    RegDst = 1'b0; 
+                    MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b10; //------srcB: SignExtended 
-                    ALUControl = 3'b001; //------ALU's func: add 
+                    ALUSrcB = 2'b10; //------srcB: SignE0tended 
+                    ALUControl = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
                 4'd11: //addi regwriteback 
                 begin 
-                    IorD = 1'bx; 
+                    PCWriteCond = 0;
+                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; //------RegWdaddr: Rt 
                     MemtoReg = 1'b0; //------RegWdin: ALUResult_DFF 
                     RegWrite = 1'b1; //------enable Reg write 
-                    ALUSrcA = 1'bx; 
-                    ALUSrcB = 2'bxx; 
-                    ALUControl = 3'bxxx; 
+                    ALUSrcA = 1'b0; 
+                    ALUSrcB = 2'b00; 
+                    ALUControl = 3'b006; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'bxx; 
+                    PCSource = 2'b00; 
                 end 
             endcase 
     end
