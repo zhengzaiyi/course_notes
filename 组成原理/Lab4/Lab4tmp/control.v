@@ -13,7 +13,7 @@ module control(
     output reg RegWrite,
     output reg ALUSrcA, 
     output reg [1:0] ALUSrcB, 
-    output reg [2:0] ALUControl, 
+    output reg [2:0] ALUcontrol, 
     output reg Branch, 
     output reg PCWrite,
     output reg PCWriteCond,  
@@ -44,7 +44,7 @@ module control(
                 case (opcode)
                     6'b100011: n_state=4'd3;
                     6'b101011: n_state=4'd5; 
-                    default: 
+                    default: ;
                 endcase
             4'd3: //memread 
                 n_state = 4'd4; 
@@ -72,11 +72,11 @@ module control(
     always @(*)begin 
         if(rst) begin 
             IorD = 1'b0; 
-            PCSource = 2'b11; //ne0tPC=0; 利用4路选择器的剩余1路 
+            PCSource = 2'b11; //ne0tPC=0; 利用4路�?�择器的剩余1�? 
             PCWrite = 1'b1; 
         end 
         else 
-            case(nstate) 
+            case(n_state) 
                 4'd0://fetch 
                 begin 
                     PCWriteCond = 0;
@@ -89,7 +89,7 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; //------srcA: PC 
                     ALUSrcB = 2'b01; //------srcB: 4 
-                    ALUControl = 3'b000; //------ALU's func: add 
+                    ALUcontrol = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b1; //------enable update PC 
                     PCSource = 2'b00; //------select ne0tPC=PC+4 
@@ -106,7 +106,7 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; //------srcA: PC 
                     ALUSrcB = 2'b11; //------srcB: SignE0tended<<2 
-                    ALUControl = 3'b000; //------ALU's func: add 
+                    ALUcontrol = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -123,7 +123,7 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
                     ALUSrcB = 2'b10; //------srcB: SignE0tended 
-                    ALUControl = 3'b000; //------ALU's func: add 
+                    ALUcontrol = 3'b000; //------ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -140,7 +140,7 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b000; 
+                    ALUcontrol = 3'b000; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -157,7 +157,7 @@ module control(
                     RegWrite = 1'b1; //------enable Reg write 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b006; 
+                    ALUcontrol = 3'd6; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -174,7 +174,7 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b006; 
+                    ALUcontrol = 3'd6; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -191,12 +191,13 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
                     ALUSrcB = 2'b00; //------srcB: RegRdout2_DFF 
-                    case(Funct) //------ALU's func: decided by 'Funct' 
-                        6'b100000: ALUControl = 5'h00;//add 
-                        6'b100010: ALUControl = 5'h01;//sub 
-                        6'b100100: ALUControl = 5'h02;//and 
-                        6'b100101: ALUControl = 5'h03;//or 
-                        6'b100110: ALUControl = 5'h04;//xor 
+                    case(FUNC) //------ALU's func: decided by 'Funct' 
+                        6'b100000: ALUcontrol = 5'h00;//add 
+                        6'b100010: ALUcontrol = 5'h01;//sub 
+                        6'b100100: ALUcontrol = 5'h02;//and 
+                        6'b100101: ALUcontrol = 5'h03;//or 
+                        6'b100110: ALUcontrol = 5'h04;//xor 
+                        default:;
                     endcase 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
@@ -214,28 +215,30 @@ module control(
                     RegWrite = 1'b1; //------enable Reg write 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b006; 
+                    ALUcontrol = 3'd6; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
                 end 
                 4'd8: //branch begin
+                begin
+                    IorD = 0; 
                     PCWriteCond = 1; 
-                    IorD = 1'b0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b00; //------srcB: RegRdout2_DFF 
-                    ALUControl = 3'b001; //------ALU's func: sub 
-                    Branch = 1'b1; //------enable update PC if beq 
+                    ALUSrcA = 1'b1; 
+                    ALUSrcB = 2'b00; 
+                    ALUcontrol = 3'b001; 
+                    Branch = 1'b1; 
                     PCWrite = 1'b0; 
-                    PCSource = 2'b01; //------select ne0tPC = ALUResult_DFF(PCBeq) 
+                    PCSource = 2'b01; 
                 end 
-                4'd9: //jump begin 
+                4'd9: //jump 
+                begin 
                     PCWriteCond = 0;
                     IorD = 1'b0; 
                     MemRead = 1'b0; 
@@ -246,12 +249,13 @@ module control(
                     RegWrite = 1'b0; 
                     ALUSrcA = 1'b0;
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b006; 
+                    ALUcontrol = 3'd6; 
                     Branch = 1'b0; 
                     PCWrite = 1'b1; //------enable update PC 
                     PCSource = 2'b10; //------select ne0tPC = PCJump 
                 end 
-                4'd10: //addi execute begin 
+                4'd10: //addi execute 
+                begin 
                     PCWriteCond = 0;
                     IorD = 1'b0; 
                     MemRead = 1'b0; 
@@ -260,9 +264,9 @@ module control(
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b10; //------srcB: SignE0tended 
-                    ALUControl = 3'b000; //------ALU's func: add 
+                    ALUSrcA = 1'b1; 
+                    ALUSrcB = 2'b10; 
+                    ALUcontrol = 3'b000; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -279,11 +283,12 @@ module control(
                     RegWrite = 1'b1; //------enable Reg write 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
-                    ALUControl = 3'b006; 
+                    ALUcontrol = 3'd6; 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
-                end 
+                end
+                default:; 
             endcase 
     end
 endmodule
