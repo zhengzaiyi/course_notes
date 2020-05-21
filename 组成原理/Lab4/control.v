@@ -64,6 +64,8 @@ module control(
                 n_state = 4'd11; 
             4'd11: //addi writeback 
                 n_state = 4'd0;
+            4'd15: // rst
+                n_state = 4'd0;
             default: ;
         endcase
     end
@@ -76,7 +78,7 @@ module control(
             PCWrite = 1'b1; 
         end 
         else 
-            case(n_state) 
+            case(c_state) 
                 4'd0://fetch 
                 begin 
                     PCWriteCond = 0;
