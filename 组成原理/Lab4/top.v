@@ -16,7 +16,7 @@ module top(
 
     wire Zero;
     
-    wire IorD; 
+    wire [1:0] IorD; 
     wire MemRead; 
     wire MemWrite; 
     wire IRWrite; 
@@ -78,20 +78,17 @@ module top(
         else if(PCwe) PC=PCin;
     end
 //----------------Memory--------------------//
-//    Memory MEM(.addra(IorD?ALUOut[10:2]:PC[10:2]),
-//               .clka(clk),
-//               .dina(B),
-//               .douta(Memdata),
-//               .ena(MemRead),
-//               .wea(MemWrite));
-    MEM1 MEM(.clk(clk), .spo(Memdata), .we(MemWrite),.a(IorD?ALUOut[10:2]:PC[10:2]),.d(B));
+    wire [31:0] rd1, rd2;
+    wire [8:0] memaddr;
+    mux4 #(9)(.a(PC[10:2]),.b(ALUOut),.c(rd1),.d(0),.sel(IorD),.y(memaddr));
+    MEM1 MEM(.clk(clk), .spo(Memdata), .we(MemWrite),.a(memaddr),.d(B));
 //----------------IR MDR--------------------//
     always @(posedge clk) 
         MDR <= Memdata;
     always @(posedge clk)
         if(IRWrite) IR <= Memdata;
 //----------------REGFILE-------------------//
-    wire [31:0] rd1, rd2;
+    
     always @(posedge clk) A <= rd1;
     always @(posedge clk) B <= rd2;
     reg_file REG(.clk(clk),
@@ -104,9 +101,10 @@ module top(
                  .wd(MemtoReg ? MDR : ALUOut),
                  .wa(RegDst?Rd:Rt));
 //----------------ALU-----------------------//
-    wire [31:0] ALUB;
+    wire [31:0] ALUA, ALUB;
     mux4 alub(.a(B),.b(4),.c(SignExtented),.d(shleft),.sel(ALUSrcB),.y(ALUB));
-    ALU alu(.a(ALUSrcA?A:PC),
+    mux4 alua(.a(PC),.b(A),.c(MDR), .d(0), .sel(ALUSrcA),.y(ALUA));
+    ALU alu(.a(ALUA),
             .b(ALUB),
             .m(ALUControl),
             .y(ALUresult),

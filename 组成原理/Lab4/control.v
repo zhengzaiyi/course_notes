@@ -4,14 +4,14 @@ module control(
     input clk, rst, zero,
     input [5:0] opcode,
     input [5:0] FUNC,
-    output reg IorD, 
+    output reg [1:0] IorD, 
     output reg MemRead, 
     output reg MemWrite, 
     output reg IRWrite, 
     output reg RegDst, 
     output reg MemtoReg, 
     output reg RegWrite,
-    output reg ALUSrcA, 
+    output reg [1:0] ALUSrcA, 
     output reg [1:0] ALUSrcB, 
     output reg [2:0] ALUcontrol, 
     output reg Branch, 
@@ -32,7 +32,7 @@ module control(
             4'd0: n_state=1;
             4'd1: // decode
                 case (opcode)
-                    6'b000000: n_state=4'd6; //R-ex
+                    6'b000000: n_state = 4'd6; //R-ex
                     6'b100011: n_state = 4'd2;//lw 
                     6'b101011: n_state = 4'd2;//sw
                     6'b000100: n_state = 4'd8;//beq 
@@ -52,7 +52,7 @@ module control(
                 n_state = 4'd0; 
             4'd5: //memwrite 
                 n_state = 4'd0; 
-            4'd6: //e0ecute 
+            4'd6: //execute 
                 n_state = 4'd7; 
             4'd7: //aluwriteback 
                 n_state = 4'd0;
@@ -73,7 +73,7 @@ module control(
     //always @(negedge clk or negedge rst)//下降沿时，根据次态，更改信号 
     always @(*)begin 
         if(rst) begin 
-            IorD = 1'b0; 
+            IorD = 0; 
             PCSource = 2'b11; //ne0tPC=0; 利用4路�?�择器的剩余1�? 
             PCWrite = 1'b1; 
         end 
@@ -82,7 +82,7 @@ module control(
                 4'd0://fetch 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; //------Memaddr: PC 
+                    IorD = 0; //------Memaddr: PC 
                     MemRead = 1'b1; //------enable Mem read 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b1; //------enable save Instr 
@@ -99,7 +99,7 @@ module control(
                 4'd1://decode 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0;
@@ -116,16 +116,16 @@ module control(
                 4'd2: //memaddr 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b10; //------srcB: SignE0tended 
-                    ALUcontrol = 3'b000; //------ALU's func: add 
+                    ALUSrcA = 1'b1; // srcA: RegRdout1_DFF 
+                    ALUSrcB = 2'b10; // srcB: SignE0tended 
+                    ALUcontrol = 3'b000;// ALU's func: add 
                     Branch = 1'b0; 
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
@@ -133,8 +133,8 @@ module control(
                 4'd3: //memread 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b1; //------Memaddr: ALUResult_DFF 
-                    MemRead = 1'b1; //------enable Mem read 
+                    IorD = 1; // Memaddr: ALUResult_DFF 
+                    MemRead = 1'b1; // enable Mem read 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
@@ -150,13 +150,13 @@ module control(
                 4'd4: //memwriteback 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0;
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
-                    RegDst = 1'b0; //------RegWdaddr: Rt 
-                    MemtoReg = 1'b1; //------RegWdin: Memout 
-                    RegWrite = 1'b1; //------enable Reg write 
+                    RegDst = 1'b0; // RegWdaddr: Rt 
+                    MemtoReg = 1'b1; // RegWdin: Memout 
+                    RegWrite = 1'b1; // enable Reg write 
                     ALUSrcA = 1'b0; 
                     ALUSrcB = 2'b00; 
                     ALUcontrol = 3'd6; 
@@ -167,9 +167,9 @@ module control(
                 4'd5: //memwrite 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b1; //------Memaddr: ALUResult_DFF 
+                    IorD = 1; // Memaddr: ALUResult_DFF 
                     MemRead = 1'b0; 
-                    MemWrite = 1'b1; //------enable Mem write 
+                    MemWrite = 1'b1; // enable Mem write 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
@@ -181,24 +181,30 @@ module control(
                     PCWrite = 1'b0; 
                     PCSource = 2'b00; 
                 end 
-                4'd6: //R type e0ecute 
+                4'd6: //R type execute 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0;
+                    IorD = 0;
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; //------srcA: RegRdout1_DFF 
-                    ALUSrcB = 2'b00; //------srcB: RegRdout2_DFF 
-                    case(FUNC) //------ALU's func: decided by 'Funct' 
+                    ALUSrcA = 1;                   
+                    ALUSrcB = 2'b00; 
+                    case(FUNC) 
                         6'b100000: ALUcontrol = 5'h00;//add 
                         6'b100010: ALUcontrol = 5'h01;//sub 
                         6'b100100: ALUcontrol = 5'h02;//and 
                         6'b100101: ALUcontrol = 5'h03;//or 
                         6'b100110: ALUcontrol = 5'h04;//xor 
+                        6'b101000: begin
+                            MemRead = 1;
+                            IorD = 2;
+                            ALUSrcA = 2;
+                            ALUcontrol = 5'h00;
+                        end
                         default:;
                     endcase 
                     Branch = 1'b0; 
@@ -208,7 +214,7 @@ module control(
                 4'd7: //aluwriteback 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
@@ -232,7 +238,7 @@ module control(
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; 
+                    ALUSrcA = 1; 
                     ALUSrcB = 2'b00; 
                     ALUcontrol = 3'b001; 
                     Branch = 1'b1; 
@@ -242,7 +248,7 @@ module control(
                 4'd9: //jump 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
@@ -259,14 +265,14 @@ module control(
                 4'd10: //addi execute 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
                     RegDst = 1'b0; 
                     MemtoReg = 1'b0; 
                     RegWrite = 1'b0; 
-                    ALUSrcA = 1'b1; 
+                    ALUSrcA = 1; 
                     ALUSrcB = 2'b10; 
                     ALUcontrol = 3'b000; 
                     Branch = 1'b0; 
@@ -276,7 +282,7 @@ module control(
                 4'd11: //addi regwriteback 
                 begin 
                     PCWriteCond = 0;
-                    IorD = 1'b0; 
+                    IorD = 0; 
                     MemRead = 1'b0; 
                     MemWrite = 1'b0; 
                     IRWrite = 1'b0; 
